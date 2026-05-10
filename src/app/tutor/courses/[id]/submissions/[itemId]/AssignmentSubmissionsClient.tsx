@@ -84,7 +84,7 @@ export default function AssignmentSubmissionsClient({ assignment, courseId, cour
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
     const [aiSourceText, setAiSourceText] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState<'all' | 'submitted' | 'graded'>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'submitted' | 'graded' | 'resubmit_requested'>('all');
     const [user, setUser] = useState<any>(null);
     const { toasts, removeToast, success, error, warning } = useToast();
 
@@ -213,6 +213,7 @@ export default function AssignmentSubmissionsClient({ assignment, courseId, cour
         switch (status) {
             case 'graded':
                 return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+            case 'resubmit_requested':
             case 'resubmission_requested':
                 return 'bg-orange-50 text-orange-600 border-orange-100';
             default:
@@ -280,6 +281,11 @@ export default function AssignmentSubmissionsClient({ assignment, courseId, cour
                                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Pending</p>
                                 <p className="text-xl font-black text-blue-600">{submissions.filter(s => s.status === 'submitted').length}</p>
                             </div>
+                            <div className="w-px h-8 bg-gray-100" />
+                            <div className="text-center">
+                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Re-submit</p>
+                                <p className="text-xl font-black text-orange-600">{submissions.filter(s => s.status === 'resubmit_requested' || s.status === 'resubmission_requested').length}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -299,14 +305,14 @@ export default function AssignmentSubmissionsClient({ assignment, courseId, cour
                                         className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-transparent focus:bg-white focus:border-primary/20 rounded-2xl text-sm font-bold outline-none transition-all placeholder:text-gray-300"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    {(['all', 'submitted', 'graded'] as const).map((status) => (
+                                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                                    {(['all', 'submitted', 'graded', 'resubmit_requested'] as const).map((status) => (
                                         <button
                                             key={status}
                                             onClick={() => setFilterStatus(status)}
-                                            className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === status ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                            className={`flex-1 min-w-[80px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === status ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                         >
-                                            {status}
+                                            {status.replace('_', '-')}
                                         </button>
                                     ))}
                                 </div>
@@ -344,7 +350,7 @@ export default function AssignmentSubmissionsClient({ assignment, courseId, cour
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
                                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${getStatusStyle(sub.status)}`}>
-                                                    {sub.status === 'submitted' ? 'New' : sub.status}
+                                                    {sub.status === 'submitted' ? 'New' : sub.status.replace('_', ' ')}
                                                 </span>
                                                 <p className="text-[9px] text-gray-300 font-bold">{new Date(sub.created_at).toLocaleDateString()}</p>
                                             </div>
