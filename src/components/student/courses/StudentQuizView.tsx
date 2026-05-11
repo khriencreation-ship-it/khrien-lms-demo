@@ -141,6 +141,20 @@ export default function StudentQuizView({ quiz, courseId, cohortId, onComplete, 
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showResultModal, setShowResultModal] = useState(false);
+    const isDeadlinePassed = () => {
+        const md = quiz.metadata || {};
+        const hasDeadline = md.hasCloseDate === true || md.hasCloseDate === 'true' || md.hasCloseDate === 'on';
+        if (!hasDeadline || !md.closeDate) return false;
+
+        try {
+            const timeStr = md.closeTime || "23:59";
+            const deadline = new Date(`${md.closeDate}T${timeStr}:00`);
+            return !isNaN(deadline.getTime()) && deadline.getTime() < new Date().getTime();
+        } catch (e) {
+            return false;
+        }
+    };
+
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null); // { attemptsCount, maxAttempts, passed, canRetry }
 
@@ -381,7 +395,15 @@ export default function StudentQuizView({ quiz, courseId, cohortId, onComplete, 
                                 Review Results
                             </button>
                         ) : (
-                            stats?.canRetry || (stats?.attemptsCount === 0 || !stats?.attemptsCount) ? ( // undefined/0 attempt count
+                            isDeadlinePassed() ? (
+                                <button
+                                    disabled
+                                    className="w-full py-4 bg-gray-200 text-gray-500 rounded-2xl font-bold text-lg cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    <Clock size={20} />
+                                    Deadline Passed
+                                </button>
+                            ) : stats?.canRetry || (stats?.attemptsCount === 0 || !stats?.attemptsCount) ? ( // undefined/0 attempt count
                                 <button
                                     onClick={() => handleRetry()}
                                     className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-lg active:scale-95"

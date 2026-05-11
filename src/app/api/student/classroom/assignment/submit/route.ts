@@ -15,6 +15,32 @@ export async function POST(req: NextRequest) {
 
         if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+        // Check if deadline has passed
+        const { data: assignmentItem, error: assignmentError } = await supabaseAdmin
+            .from('module_items')
+            .select('metadata')
+            .eq('id', assignmentId)
+            .single();
+
+        if (assignmentError || !assignmentItem) {
+            return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+        }
+
+        const metadata = assignmentItem.metadata || {};
+        const hasCloseDate = metadata.hasCloseDate === true || metadata.hasCloseDate === 'true' || metadata.hasCloseDate === 'on';
+        
+        if (hasCloseDate && metadata.closeDate) {
+            try {
+                const timeStr = metadata.closeTime || "23:59";
+                const deadline = new Date(`${metadata.closeDate}T${timeStr}:00`);
+                if (!isNaN(deadline.getTime()) && deadline.getTime() < new Date().getTime()) {
+                    return NextResponse.json({ error: 'The deadline for this assignment has passed.' }, { status: 403 });
+                }
+            } catch (e) {
+                console.error("Deadline check error:", e);
+            }
+        }
+
         // Check if already submitted (if multiple submissions not allowed)
         // For now, assuming standard submission flow allows one active, or just inserts new one.
         // We'll insert a new record.

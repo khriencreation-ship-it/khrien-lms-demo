@@ -29,7 +29,22 @@ export async function POST(req: NextRequest) {
 
         if (!item) return NextResponse.json({ error: 'Quiz not found' }, { status: 404 });
 
-        const maxAttempts = parseInt(item.metadata?.maxAttempts || '1');
+        const metadata = item.metadata || {};
+        const maxAttempts = parseInt(metadata.maxAttempts || '1');
+
+        // Check if deadline has passed
+        const hasCloseDate = metadata.hasCloseDate === true || metadata.hasCloseDate === 'true' || metadata.hasCloseDate === 'on';
+        if (hasCloseDate && metadata.closeDate) {
+            try {
+                const timeStr = metadata.closeTime || "23:59";
+                const deadline = new Date(`${metadata.closeDate}T${timeStr}:00`);
+                if (!isNaN(deadline.getTime()) && deadline.getTime() < new Date().getTime()) {
+                    return NextResponse.json({ error: 'The deadline for this quiz has passed.' }, { status: 403 });
+                }
+            } catch (e) {
+                console.error("Quiz deadline check error:", e);
+            }
+        }
 
         // Count existing submissions scoped by cohort
         let queryCount = supabaseAdmin
