@@ -45,6 +45,7 @@ output.json
 props_out.json
 props_out.txt
 id.txt
+seed-demo.js
 
 # typescript
 *.tsbuildinfo
